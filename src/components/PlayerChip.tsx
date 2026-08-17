@@ -1,0 +1,6 @@
+import { ShieldAlert, Star } from 'lucide-react';
+import { initials, money } from '../lib/format';
+import type { SquadPlayer } from '../types/database';
+
+export function PlayerAvatar({name,src,className='player-avatar-sm'}:{name:string;src?:string|null;className?:string}){return <span className={`${className} relative`} aria-hidden="true"><span>{initials(name)}</span>{src&&<img className="absolute inset-0" src={src} alt="" onError={e=>e.currentTarget.remove()}/>}</span>}
+export default function PlayerChip({entry,selected,onClick,actions=true}:{entry:SquadPlayer;selected?:boolean;onClick?:()=>void;actions?:boolean}){const p=entry.players;return <button type="button" onClick={onClick} className={`player-chip ${selected?'ring-2 ring-gold':''}`} aria-pressed={selected}><PlayerAvatar name={p.name} src={p.photo_url} className="player-avatar"/>{entry.is_captain&&<span className="role-badge">C</span>}{entry.is_vice_captain&&<span className="role-badge">V</span>}<span className="truncate font-semibold text-xs w-full text-center">{p.name}</span><span className="text-[10px] text-midnight-600">{p.position} · {money(p.price)}</span>{p.status!=='available'&&<ShieldAlert aria-label={p.status} size={12} className="absolute top-2 right-2 text-amber-600"/>}{actions&&entry.is_captain&&<Star aria-hidden="true" size={11} className="text-gold fill-gold"/>}</button>}

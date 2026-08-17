@@ -1,36 +1,47 @@
-# Fantasy
+# Faggala Fantasy
 
-Frontend scaffold for the Fantasy platform (church-league fantasy sports),
-built on the existing schema/RLS/triggers/points-engine migrations and the
-`finalize-gameweek` edge function.
+Production-oriented church-league fantasy football application built with React 19, TypeScript, Vite, Tailwind, Supabase Auth/PostgreSQL/RLS and Supabase Edge Functions.
 
-## Stack
-React + TypeScript + Vite + Tailwind + Supabase JS + React Router + Recharts.
+## Local setup
 
-## Setup
-```
+```bash
 npm install
-cp .env.example .env.local   # fill in your Supabase project URL + anon key
+cp .env.example .env.local
 npm run dev
 ```
 
-## Structure
-- `src/pages/Landing.tsx` — gateway hero, matches the brand's arch/glow key art
-- `src/pages/Dashboard.tsx` — signed-in overview (stats, live matches, top players, leaderboard)
-- `src/components/Logo.tsx` — the cross-topped arch + runner mark, built as SVG (no image asset)
-- `src/lib/supabase.ts` — client + `finalizeGameweek()` wrapper for the edge function
-- `src/types/database.ts` — TS types mirroring `001_schema.sql`
-- `src/data/mock.ts` — placeholder data; swap for real Supabase queries once `.env.local` is set
-- `supabase/migrations/` — your four migrations, copied in as-is
-- `supabase/functions/finalize-gameweek/` — your edge function, copied in as-is
+Set only the public browser credentials in `.env.local`:
 
-## Brand tokens (tailwind.config.js)
-- `midnight-900` #0D2737 · `gold` #DAA520 · `mist` #E6E8EB · `paper` #F7F8FA
-- Display/body font: Exo 2 (bold italic for the wordmark) · Arabic: Tajawal
-- Signature element: the gold arc (`ArcDivider`) used as a recurring
-  section-break motif, echoing the "energy arc" in the brand mark
+```text
+VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+VITE_SUPABASE_ANON_KEY=YOUR_PUBLIC_ANON_KEY
+```
 
-## Not yet wired up
-Auth, real Supabase queries (My Teams, Transfers, Standings pages), and
-the super_admin gameweek-finalize trigger UI — the dashboard currently
-renders from `src/data/mock.ts` so you can see the design without a live DB.
+Apply migrations `001` through `010` in order. Deploy both protected functions:
+
+```bash
+supabase functions deploy lock-gameweek
+supabase functions deploy finalize-gameweek
+```
+
+`SUPABASE_SERVICE_ROLE_KEY` is supplied by the Edge Function environment and must never be exposed through a `VITE_*` variable.
+
+## Verification
+
+```bash
+npm run lint
+npm test
+npm run build
+```
+
+The hardening migrations add immutable gameweek/rule snapshots, price history, bank/purchase-price accounting, validated squad and lineup RPCs, atomic transfers, transfer penalties, deadline locking, automatic substitutions, captain fallback, deterministic scoring, payment idempotency, an atomic wallet ledger, scoped storage, restrictive grants, and hardened RLS. See [`supabase/SCHEMA_AUDIT.md`](supabase/SCHEMA_AUDIT.md) and [`supabase/DATABASE_ARCHITECTURE.md`](supabase/DATABASE_ARCHITECTURE.md).
+
+## Competition setup
+
+1. Create the first Supabase Auth account, then promote it once to `super_admin` using a trusted server/admin SQL session.
+2. In `/admin`, configure real teams, players, a current season, gameweeks and fixtures.
+3. Create a validated default `fantasy_rules` version for the current season before league/team creation.
+4. Add allowed production URLs to Supabase Auth redirect URLs (`/auth/callback` and `/reset-password`).
+5. Enable Realtime for `notifications` and match/stat tables if live push updates are desired.
+
+All competition timestamps are stored as `timestamptz` and rendered in `Africa/Cairo`.

@@ -1,60 +1,22 @@
-import {
-  LayoutGrid,
-  Swords,
-  Users,
-  BarChart3,
-  Trophy,
-  ListOrdered,
-  Settings,
-  LifeBuoy,
-  LogOut,
-} from 'lucide-react';
+import { LifeBuoy, LogOut, Settings, Shield } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
 import Logo from './Logo';
-
-const NAV = [
-  { label: 'Overview', icon: LayoutGrid, active: true },
-  { label: 'My Contests', icon: Swords },
-  { label: 'My Teams', icon: Users },
-  { label: 'Live Scores', icon: BarChart3 },
-  { label: 'Standings', icon: ListOrdered },
-  { label: 'Leaderboards', icon: Trophy },
-];
+import { useAuth } from '../contexts/AuthContext';
+import { NAV } from './navigation';
 
 export default function Sidebar() {
-  return (
-    <aside className="hidden md:flex md:w-60 md:flex-col bg-midnight-900 text-mist px-4 py-6 shrink-0">
-      <div className="flex items-center gap-2 px-2 mb-8">
-        <Logo variant="mark" className="w-8 h-8" />
-        <span className="font-display italic font-extrabold text-lg text-white">Fantasy</span>
-      </div>
-
-      <nav className="flex-1 space-y-1">
-        {NAV.map(({ label, icon: Icon, active }) => (
-          <button
-            key={label}
-            className={`w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
-              active
-                ? 'bg-midnight-700 text-white border-l-2 border-gold'
-                : 'text-mist/70 hover:bg-midnight-800 hover:text-white'
-            }`}
-          >
-            <Icon size={16} strokeWidth={2} />
-            {label}
-          </button>
-        ))}
-      </nav>
-
-      <div className="space-y-1 border-t border-midnight-700 pt-3">
-        <button className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-mist/70 hover:bg-midnight-800 hover:text-white">
-          <Settings size={16} /> Settings
-        </button>
-        <button className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-mist/70 hover:bg-midnight-800 hover:text-white">
-          <LifeBuoy size={16} /> Help &amp; Support
-        </button>
-        <button className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-mist/70 hover:bg-midnight-800 hover:text-white">
-          <LogOut size={16} /> Log Out
-        </button>
-      </div>
-    </aside>
-  );
+  const { profile, signOut } = useAuth();
+  return <aside className="sidebar-shell">
+    <NavLink to="/app" className="brand-lockup" aria-label="Faggala Fantasy home"><Logo className="h-16 w-44" /></NavLink>
+    <p className="sidebar-label">Game</p>
+    <nav className="flex-1 space-y-1 overflow-y-auto" aria-label="Primary navigation">
+      {NAV.map(([label, Icon, to]) => <NavLink key={to} end={to === '/app'} to={to} className={({ isActive }) => `nav-link ${isActive ? 'nav-active' : ''}`}><Icon size={18} aria-hidden="true" />{label}</NavLink>)}
+      {profile?.platform_role === 'super_admin' && <NavLink to="/admin" className={({ isActive }) => `nav-link ${isActive ? 'nav-active' : ''}`}><Shield size={18} />Competition Control</NavLink>}
+    </nav>
+    <div className="space-y-1 border-t border-white/10 pt-3">
+      <NavLink className="nav-link" to="/app/settings"><Settings size={17} />Settings</NavLink>
+      <NavLink className="nav-link" to="/app/help"><LifeBuoy size={17} />Rules & help</NavLink>
+      <button className="nav-link w-full" onClick={() => void signOut()}><LogOut size={17} />Log out</button>
+    </div>
+  </aside>;
 }

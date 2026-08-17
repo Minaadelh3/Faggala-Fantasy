@@ -1,73 +1,12 @@
+import { ArrowRight, BarChart3, Repeat2, ShieldCheck, Trophy, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Logo from '../components/Logo';
-import ArcDivider from '../components/ArcDivider';
 
-export default function Landing() {
-  return (
-    <div className="min-h-screen bg-midnight-900 text-white relative overflow-hidden flex flex-col">
-      {/* ambient gateway glow */}
-      <div className="absolute inset-0 bg-gateway-glow pointer-events-none" />
-      <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-gold/10 blur-3xl" />
-      <div className="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-gold/10 blur-3xl" />
-
-      <header className="relative z-10 flex items-center justify-between px-6 md:px-12 py-6">
-        <div className="flex items-center gap-2">
-          <Logo variant="mark" className="w-9 h-9" />
-          <span className="font-display italic font-extrabold text-lg">Fantasy</span>
-        </div>
-        <Link
-          to="/dashboard"
-          className="rounded-full border border-gold/50 px-4 py-1.5 text-sm font-medium text-gold-light hover:bg-gold hover:text-midnight-900 transition-colors"
-        >
-          Enter the gateway
-        </Link>
-      </header>
-
-      <main className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-6 py-16">
-        <Logo variant="mark" className="w-32 h-32 mb-6 drop-shadow-[0_0_30px_rgba(218,165,32,0.35)]" />
-        <p className="font-arabic text-gold-light text-sm mb-2" dir="rtl">
-          كل لعبة طريق للمحبة
-        </p>
-        <h1 className="font-display italic font-extrabold text-4xl md:text-6xl leading-tight max-w-3xl">
-          Every game is a path to belonging.
-        </h1>
-        <ArcDivider className="my-6" />
-        <p className="text-mist/70 max-w-xl mb-8">
-          Fantasy brings your church community together through the game — build your
-          dream team, follow your league live, and climb the leaderboard, all under one
-          gateway.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Link
-            to="/dashboard"
-            className="rounded-lg bg-gold text-midnight-900 font-display font-bold px-6 py-3 hover:bg-gold-light transition-colors"
-          >
-            Pick. Compete. Win.
-          </Link>
-          <a
-            href="#how-it-works"
-            className="rounded-lg border border-mist/30 px-6 py-3 font-medium text-mist hover:border-gold hover:text-gold-light transition-colors"
-          >
-            How it works
-          </a>
-        </div>
-      </main>
-
-      <footer id="how-it-works" className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-px bg-midnight-700">
-        {[
-          { label: 'Build your team', desc: 'Pick players within budget' },
-          { label: 'Follow live', desc: 'Real-time scores and points' },
-          { label: 'Compete in league', desc: 'Your church, your community' },
-          { label: 'Climb the board', desc: 'Weekly and season rankings' },
-        ].map((s) => (
-          <div key={s.label} className="bg-midnight-900 p-6 text-left">
-            <p className="text-xs uppercase tracking-wide text-gold-dim font-semibold mb-1">
-              {s.label}
-            </p>
-            <p className="text-sm text-mist/70">{s.desc}</p>
-          </div>
-        ))}
-      </footer>
-    </div>
-  );
-}
+const steps=[['01','Pick',ShieldCheck,'Build a legal squad within the competition rules.'],['02','Play',BarChart3,'Follow every fixture and every fantasy point.'],['03','Compete',Trophy,'Climb past friends in your community leagues.']] as const;
+export default function Landing(){return <div className="min-h-screen bg-[#06171f] text-white overflow-hidden">
+  <header className="relative z-20 mx-auto flex max-w-7xl items-center justify-between px-5 py-5 md:px-8"><Link to="/" className="rounded-xl bg-white px-3 py-1.5"><Logo className="h-12 w-36"/></Link><nav className="flex items-center gap-2"><a href="#how" className="hidden sm:block px-4 py-2 text-sm text-white/60 hover:text-white">How it works</a><Link to="/login" className="btn-primary">Enter the gateway <ArrowRight size={16}/></Link></nav></header>
+  <main><section className="relative mx-auto grid min-h-[690px] max-w-7xl items-center gap-10 px-5 pb-20 pt-10 md:px-8 lg:grid-cols-[1.1fr_.9fr] lg:pt-4"><div className="absolute left-[62%] top-[-12%] h-[650px] w-[650px] rounded-full border border-gold/10"/><div className="absolute left-[66%] top-[-4%] h-[520px] w-[520px] rounded-full border border-gold/15"/><div className="relative z-10"><p className="mb-5 text-xs font-bold uppercase tracking-[.28em] text-gold-light">More than sport. It’s our fantasy.</p><h1 className="max-w-3xl font-display text-5xl font-extrabold leading-[.98] tracking-[-.04em] sm:text-6xl lg:text-[78px]">Enter the gateway.<br/><span className="text-gold">Build your legend.</span></h1><p className="mt-7 max-w-xl text-base leading-7 text-white/58 md:text-lg">A premium fantasy sports competition built for the Faggala community. Pick your squad, own every moment and rise together.</p><div className="mt-8 flex flex-wrap gap-3"><Link to="/signup" className="btn-primary px-6 py-3">Start playing <ArrowRight size={17}/></Link><a href="#how" className="inline-flex items-center rounded-xl border border-white/15 px-6 py-3 text-sm font-bold hover:border-gold/60">See how it works</a></div><div className="mt-12 flex flex-wrap gap-x-8 gap-y-3 text-xs uppercase tracking-wider text-white/35"><span className="flex gap-2"><ShieldCheck size={15} className="text-gold"/>Strategy</span><span className="flex gap-2"><Users size={15} className="text-gold"/>Community</span><span className="flex gap-2"><Trophy size={15} className="text-gold"/>Competition</span></div></div>
+  <div className="relative z-10 mx-auto w-full max-w-[460px]"><div className="absolute -inset-16 rounded-full bg-gold/10 blur-3xl"/><div className="relative rounded-[42%_42%_24px_24px] border border-white/10 bg-white/[.035] px-7 pb-8 pt-14 backdrop-blur"><div className="mx-auto rounded-2xl bg-white p-5 shadow-[0_35px_80px_rgba(0,0,0,.35)]"><Logo className="mx-auto h-72 w-full"/></div><div className="mt-7 flex items-center justify-between"><div><small className="block uppercase tracking-widest text-white/35">The next move</small><strong>Pick. Play. Win.</strong></div><Repeat2 className="text-gold"/></div></div></div></section>
+  <section id="how" className="bg-[#f4f5f2] px-5 py-20 text-midnight-900 md:px-8"><div className="mx-auto max-w-7xl"><div className="mb-10 max-w-2xl"><p className="eyebrow">Every round has a rhythm</p><h2 className="font-display text-4xl font-extrabold tracking-tight md:text-5xl">One passion. One community.</h2><p className="mt-4 text-midnight-600">Everything is designed around the weekly fantasy loop—clear deadlines, confident decisions and transparent performance.</p></div><div className="grid gap-4 md:grid-cols-3">{steps.map(([number,title,Icon,copy])=><article key={title} className="panel relative min-h-60 overflow-hidden p-7"><span className="absolute right-4 top-0 font-display text-8xl font-extrabold text-midnight-900/[.035]">{number}</span><Icon className="mb-12 text-gold" size={28}/><h3 className="font-display text-2xl font-extrabold">{title}</h3><p className="mt-2 text-sm leading-6 text-midnight-600">{copy}</p></article>)}</div></div></section></main>
+  <footer className="border-t border-white/10 px-5 py-8"><div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 sm:flex-row"><div className="rounded-lg bg-white px-2"><Logo className="h-11 w-28"/></div><p className="text-xs text-white/35">Beyond the game. Through the gateway.</p></div></footer>
+  </div>}

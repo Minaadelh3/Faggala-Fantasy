@@ -1,14 +1,13 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Landing from './pages/Landing';
-import Dashboard from './pages/Dashboard';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
+import Landing from './pages/Landing'; import Auth from './pages/Auth'; import AuthCallback from './pages/AuthCallback';
+import AppLayout from './components/AppLayout'; import { AdminRoute, ProtectedRoute } from './components/RouteGuards';
+import { LoadingScreen } from './components/ui';
+const Dashboard=lazy(()=>import('./pages/Dashboard')); const MyTeam=lazy(()=>import('./pages/MyTeam')); const Points=lazy(()=>import('./pages/Points')); const Transfers=lazy(()=>import('./pages/Transfers')); const Leagues=lazy(()=>import('./pages/Leagues')); const SquadBuilder=lazy(()=>import('./pages/SquadBuilder')); const Admin=lazy(()=>import('./pages/Admin'));
+const Fixtures=lazy(()=>import('./pages/Competition').then(m=>({default:m.Fixtures}))); const History=lazy(()=>import('./pages/Competition').then(m=>({default:m.History}))); const Leaderboards=lazy(()=>import('./pages/Competition').then(m=>({default:m.Leaderboards}))); const Notifications=lazy(()=>import('./pages/Competition').then(m=>({default:m.Notifications}))); const PlayerProfile=lazy(()=>import('./pages/Competition').then(m=>({default:m.PlayerProfile}))); const Players=lazy(()=>import('./pages/Competition').then(m=>({default:m.Players}))); const Help=lazy(()=>import('./pages/Settings').then(m=>({default:m.Help}))); const Settings=lazy(()=>import('./pages/Settings').then(m=>({default:m.Settings})));
 
-export default function App() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-      </Routes>
-    </BrowserRouter>
-  );
-}
+export default function App() { return <BrowserRouter><Suspense fallback={<LoadingScreen/>}><Routes>
+  <Route path="/" element={<Landing />} /><Route path="/login" element={<Auth mode="login" />} /><Route path="/signup" element={<Auth mode="signup" />} /><Route path="/forgot-password" element={<Auth mode="forgot" />} /><Route path="/reset-password" element={<Auth mode="reset" />} /><Route path="/auth/callback" element={<AuthCallback />} />
+  <Route element={<ProtectedRoute />}><Route path="/app" element={<AppLayout />}><Route index element={<Dashboard />} /><Route path="team" element={<MyTeam />} /><Route path="points" element={<Points />} /><Route path="transfers" element={<Transfers />} /><Route path="live" element={<Fixtures liveOnly />} /><Route path="fixtures" element={<Fixtures />} /><Route path="players" element={<Players />} /><Route path="players/:playerId" element={<PlayerProfile />} /><Route path="leaderboards" element={<Leaderboards />} /><Route path="leagues" element={<Leagues />} /><Route path="leagues/:leagueId/build" element={<SquadBuilder />} /><Route path="history" element={<History />} /><Route path="notifications" element={<Notifications />} /><Route path="settings" element={<Settings />} /><Route path="help" element={<Help />} /></Route><Route element={<AdminRoute />}><Route path="/admin" element={<AppLayout />}><Route index element={<Admin />} /></Route></Route></Route>
+  <Route path="/dashboard" element={<Navigate to="/app" replace />} /><Route path="*" element={<Navigate to="/" replace />} />
+  </Routes></Suspense></BrowserRouter>; }

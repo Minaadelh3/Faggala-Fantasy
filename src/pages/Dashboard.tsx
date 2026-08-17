@@ -1,104 +1,25 @@
-import { Trophy, TrendingUp, Wallet, Swords, Bell } from 'lucide-react';
-import Sidebar from '../components/Sidebar';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowRight, Clock3, Repeat2, Shield, TrendingUp, Trophy, Wallet } from 'lucide-react';
 import StatCard from '../components/StatCard';
-import PointsChart from '../components/PointsChart';
-import Leaderboard from '../components/Leaderboard';
-import LiveMatchRow from '../components/LiveMatchRow';
-import ArcDivider from '../components/ArcDivider';
-import { currentUser, liveMatches, myTeam, nextMatch } from '../data/mock';
+import PlayerChip from '../components/PlayerChip';
+import { DeadlinePanel, ErrorNotice, LoadingScreen, PageHeader } from '../components/ui';
+import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
+import { cairoDate, money } from '../lib/format';
+import type { FantasyTeam, Gameweek, Match, SquadPlayer } from '../types/database';
 
-export default function Dashboard() {
-  return (
-    <div className="min-h-screen flex bg-paper">
-      <Sidebar />
-
-      <main className="flex-1 p-5 md:p-8 max-w-7xl mx-auto w-full">
-        <header className="flex items-start justify-between mb-6">
-          <div>
-            <p className="text-xs uppercase tracking-wide text-gold-dim font-semibold">
-              {currentUser.church}
-            </p>
-            <h1 className="font-display text-2xl font-bold text-midnight-900 mt-0.5">
-              Welcome back, {currentUser.name}
-            </h1>
-            <ArcDivider className="mt-2" />
-          </div>
-          <button className="relative rounded-full border border-mist bg-white p-2">
-            <Bell size={18} className="text-midnight-700" />
-            <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-gold" />
-          </button>
-        </header>
-
-        <section className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          <StatCard
-            label="Total points"
-            value={currentUser.totalPoints.toLocaleString()}
-            sublabel={`+${currentUser.weeklyChangePct}% vs last week`}
-            icon={TrendingUp}
-            accent
-          />
-          <StatCard label="Rank" value={`#${currentUser.rank.toLocaleString()}`} sublabel="Top 3%" icon={Trophy} />
-          <StatCard
-            label="Winnings"
-            value={`E£${currentUser.winnings.toLocaleString()}`}
-            sublabel="Total"
-            icon={Wallet}
-          />
-          <StatCard
-            label="Contests"
-            value={String(currentUser.activeContests)}
-            sublabel="Active"
-            icon={Swords}
-          />
-        </section>
-
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          <div className="lg:col-span-2 space-y-5">
-            <PointsChart />
-
-            <div className="rounded-xl border border-mist bg-white p-4">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-display font-semibold text-midnight-900">Live now</h3>
-                <button className="text-xs font-medium text-gold-dim hover:underline">View all</button>
-              </div>
-              {liveMatches.map((m) => (
-                <LiveMatchRow key={`${m.home}-${m.away}`} {...m} />
-              ))}
-            </div>
-
-            <div className="rounded-xl border border-mist bg-white p-4">
-              <h3 className="font-display font-semibold text-midnight-900 mb-3">My top players</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {myTeam.map((p) => (
-                  <div
-                    key={p.name}
-                    className="rounded-lg border border-mist p-3 text-center bg-paper"
-                  >
-                    <div className="mx-auto mb-2 h-10 w-10 rounded-full bg-midnight-800 flex items-center justify-center text-gold font-display font-bold text-sm">
-                      {p.name.split(' ').map((n) => n[0]).join('')}
-                    </div>
-                    <p className="text-xs font-medium text-midnight-900">{p.name}</p>
-                    <p className="text-[10px] text-midnight-600/60">{p.position}</p>
-                    <p className="text-xs font-display font-bold text-gold-dim mt-1">{p.points} pts</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-5">
-            <div className="rounded-xl bg-midnight-900 text-white p-4 relative overflow-hidden">
-              <p className="text-xs uppercase tracking-wide text-gold-light font-semibold">Next match</p>
-              <p className="font-display font-bold mt-1">
-                {nextMatch.home} vs {nextMatch.away}
-              </p>
-              <p className="text-xs text-mist/70 mt-1">{nextMatch.kickoff}</p>
-              <ArcDivider className="mt-3" />
-            </div>
-            <Leaderboard />
-          </div>
-        </section>
-      </main>
-    </div>
-  );
+interface State { team:FantasyTeam|null; gameweek:Gameweek|null; matches:Match[]; squad:SquadPlayer[]; lastPoints:number; error:string|null }
+export default function Dashboard(){
+  const{profile}=useAuth(); const[state,setState]=useState<State>({team:null,gameweek:null,matches:[],squad:[],lastPoints:0,error:null}); const[loading,setLoading]=useState(true);
+  useEffect(()=>{void(async()=>{const teamResult=await supabase.from('fantasy_teams').select('*,fantasy_leagues(name,season_id)').order('created_at').limit(1).maybeSingle();if(teamResult.error){setState(s=>({...s,error:teamResult.error.message}));setLoading(false);return}const team=teamResult.data as FantasyTeam|null;const seasonId=team?.fantasy_leagues?.season_id;let gameweek:Gameweek|null=null,matches:Match[]=[],squad:SquadPlayer[]=[],lastPoints=0;if(team&&seasonId){const[g,s,p]=await Promise.all([supabase.from('gameweeks').select('*').eq('season_id',seasonId).in('status',['upcoming','locked','active']).order('number').limit(1).maybeSingle(),supabase.from('fantasy_team_players').select('*,players(*,teams(*))').eq('fantasy_team_id',team.id),supabase.from('fantasy_team_gameweek_points').select('points').eq('fantasy_team_id',team.id).order('finalized_at',{ascending:false}).limit(1).maybeSingle()]);gameweek=g.data as Gameweek|null;squad=(s.data??[])as SquadPlayer[];lastPoints=p.data?.points??0;if(gameweek){const m=await supabase.from('matches').select('*,home_team:teams!matches_home_team_id_fkey(*),away_team:teams!matches_away_team_id_fkey(*)').eq('gameweek_id',gameweek.id).order('match_date');matches=(m.data??[])as Match[]}}setState({team,gameweek,matches,squad,lastPoints,error:null});setLoading(false)})()},[]);
+  if(loading)return <LoadingScreen/>;if(state.error)return <ErrorNotice message={state.error}/>;if(!state.team)return <><PageHeader eyebrow="Welcome to the gateway" title={`Hello, ${profile?.full_name?.split(' ')[0]??'manager'}`}/><section className="welcome-panel"><div><p className="eyebrow text-gold-light">Your first move</p><h2>Build your legend.</h2><p>Join a community league, select a legal 15-player squad and start competing.</p><Link className="btn-primary mt-6" to="/app/leagues">Build my team <ArrowRight size={16}/></Link></div><Shield size={110}/></section></>;
+  const live=state.matches.filter(m=>m.status==='live'); const captain=state.squad.find(x=>x.is_captain); const starters=state.squad.filter(x=>!x.is_bench).slice(0,5);
+  return <><PageHeader eyebrow={state.team.fantasy_leagues?.name} title={`Your command center, ${profile?.full_name?.split(' ')[0]??'manager'}`}><span className="text-xs text-midnight-600">Updated just now</span></PageHeader>
+    {state.gameweek?<DeadlinePanel gameweek={state.gameweek} action={<Link className="btn-primary" to={state.gameweek.status==='upcoming'?'/app/team':'/app/points'}>{state.gameweek.status==='upcoming'?'Manage team':'View points'}<ArrowRight size={16}/></Link>}/>:<div className="locked-banner">No active round is configured. Your team remains safe.</div>}
+    <section className="metric-grid"><StatCard label="Round points" value={String(state.lastPoints)} sublabel="Latest scored round" icon={TrendingUp} accent/><StatCard label="Total points" value={state.team.total_points.toLocaleString()} sublabel={state.team.overall_rank?`Overall #${state.team.overall_rank}`:'Rank pending'} icon={Trophy}/><StatCard label="Bank" value={money(state.team.bank)} sublabel="Available budget" icon={Wallet}/><StatCard label="Free transfers" value={String(state.team.free_transfers)} sublabel="Maximum 2" icon={Repeat2}/></section>
+    <section className="dashboard-grid"><div className="panel team-snapshot"><div className="section-title"><div><p className="eyebrow">My team</p><h2>{state.team.name}</h2></div><Link to="/app/team">View team</Link></div>{captain&&<div className="captain-callout"><span>C</span><div><small>Your captain</small><strong>{captain.players.name}</strong></div></div>}<div className="snapshot-players">{starters.map(x=><PlayerChip key={x.id} entry={x} actions={false}/>)}</div>{!starters.length&&<p className="empty-copy">Your lineup will appear here.</p>}</div>
+    <div className="panel"><div className="section-title"><div><p className="eyebrow">Match center</p><h2>{live.length?'Live now':'Next fixtures'}</h2></div><Link to="/app/fixtures">All fixtures</Link></div>{(live.length?live:state.matches.filter(m=>m.status==='scheduled').slice(0,4)).map(m=><MatchLine key={m.id} match={m}/>)}{!state.matches.length&&<p className="empty-copy">No fixtures have been scheduled for this round.</p>}</div>
+    <aside className="space-y-4"><Link className="action-card" to="/app/transfers"><span><small>Plan the next move</small><strong>Make transfers</strong></span><ArrowRight/></Link><Link className="action-card light" to="/app/leagues"><span><small>Community</small><strong>Check your rivals</strong></span><ArrowRight/></Link><div className="panel"><Clock3 className="text-gold mb-3"/><p className="eyebrow">Game loop</p><ol className="game-loop"><li className="done">Check round</li><li>Manage team</li><li>Earn points</li><li>Climb the league</li></ol></div></aside></section></>;
 }
+export function MatchLine({match:m}:{match:Match}){const live=m.status==='live';return <div className="match-line"><div className="min-w-0"><p className="font-semibold truncate">{m.home_team?.name??'Home'} <span className="text-midnight-600 mx-1">vs</span> {m.away_team?.name??'Away'}</p><p className="text-xs text-midnight-600">{live&&<span className="live-dot"/>}{cairoDate(m.match_date)} · {m.status}</p></div><strong className="match-score">{m.home_score??'–'} <span>:</span> {m.away_score??'–'}</strong></div>}

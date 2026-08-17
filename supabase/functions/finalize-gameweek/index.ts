@@ -32,11 +32,6 @@ Deno.serve(async (req) => {
     });
   }
 
-  const { gameweek_id } = await req.json().catch(() => ({}));
-  if (!gameweek_id) {
-    return new Response(JSON.stringify({ error: 'gameweek_id is required' }), { status: 400, headers: corsHeaders });
-  }
-
   // Verify the caller is a signed-in super_admin using their own token
   const callerClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
     global: { headers: { Authorization: authHeader } },
@@ -63,6 +58,11 @@ Deno.serve(async (req) => {
 
   // Run the pipeline with the service role (bypasses RLS by design —
   // finalize_gameweek() itself is locked to the service_role grantee)
+  const { gameweek_id } = await req.json().catch(() => ({}));
+  if (!gameweek_id) {
+    return new Response(JSON.stringify({ error: 'gameweek_id is required' }), { status: 400, headers: corsHeaders });
+  }
+
   const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
   const { error } = await adminClient.rpc('finalize_gameweek', {
     target_gameweek_id: gameweek_id,

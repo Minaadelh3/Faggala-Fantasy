@@ -3,6 +3,8 @@
 
 begin;
 
+set local search_path = public, extensions;
+
 -- Financial history blocks church deletion instead of disappearing silently.
 alter table public.subscriptions drop constraint if exists subscriptions_church_id_fkey;
 alter table public.subscriptions add constraint subscriptions_church_id_fkey

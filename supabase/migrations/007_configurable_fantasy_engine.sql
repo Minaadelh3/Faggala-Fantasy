@@ -3,6 +3,8 @@
 
 begin;
 
+set local search_path = public, extensions;
+
 -- Migration 005 reflected the current values in physical CHECK constraints.
 -- Keep only invariant lower bounds here; the versioned rule snapshot supplies
 -- season-specific upper bounds.
@@ -308,7 +310,7 @@ create unique index uq_fantasy_league_secrets_code_ci
 insert into public.fantasy_league_secrets(league_id, invite_code)
 select id,
        case when upper(invite_code) ~ '^FAG-[A-F0-9]{10,64}$' then upper(invite_code)
-            else 'FAG-' || upper(encode(gen_random_bytes(10), 'hex')) end
+            else 'FAG-' || upper(encode(extensions.gen_random_bytes(10), 'hex')) end
 from public.fantasy_leagues
 where is_private and invite_code is not null
 on conflict(league_id) do nothing;
@@ -388,7 +390,7 @@ begin
 
   if p_is_private then
     insert into public.fantasy_league_secrets(league_id,invite_code)
-    values(new_league.id,'FAG-'||upper(encode(gen_random_bytes(10),'hex')));
+    values(new_league.id,'FAG-'||upper(encode(extensions.gen_random_bytes(10),'hex')));
   end if;
   insert into public.audit_logs(actor_id,church_id,action,entity_type,entity_id)
   values(auth.uid(),p_church_id,'fantasy_league.created','fantasy_league',new_league.id);
@@ -571,7 +573,7 @@ as $$
 declare
   league_row public.fantasy_leagues;
   rule jsonb;
-  team_id uuid;
+  created_team_id uuid;
   deadline timestamptz;
   squad_cost numeric;
   expected_size integer;
@@ -617,16 +619,16 @@ begin
   insert into public.fantasy_teams(league_id,user_id,name,budget,starting_budget,bank,free_transfers)
   values(p_league_id,auth.uid(),btrim(p_name),(rule->>'starting_budget')::numeric,
          (rule->>'starting_budget')::numeric,(rule->>'starting_budget')::numeric-squad_cost,0)
-  returning id into team_id;
+  returning id into created_team_id;
   insert into public.fantasy_team_players(
     fantasy_team_id,player_id,purchase_price,is_bench,bench_order,is_captain,is_vice_captain
   )
-  select team_id,(x->>'player_id')::uuid,p.price,coalesce((x->>'is_bench')::boolean,false),
+  select created_team_id,(x->>'player_id')::uuid,p.price,coalesce((x->>'is_bench')::boolean,false),
          nullif(x->>'bench_order','')::integer,coalesce((x->>'is_captain')::boolean,false),
          coalesce((x->>'is_vice_captain')::boolean,false)
   from jsonb_array_elements(p_players) x join public.players p on p.id=(x->>'player_id')::uuid;
-  perform public.assert_squad_valid(team_id);
-  return team_id;
+  perform public.assert_squad_valid(created_team_id);
+  return created_team_id;
 end;
 $$;
 

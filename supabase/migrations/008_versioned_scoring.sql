@@ -184,7 +184,9 @@ begin
         where fantasy_team_id=team.fantasy_team_id and gameweek_id=week_row.id
           and ((is_starting and not was_auto_subbed_out and id<>missing.id)
                or was_auto_subbed_in or id=bench_player.id);
-        if public.formation_is_valid_for_rules(counts.gk,counts.def,counts.mid,counts.fwd,team.rules) then
+        if public.formation_is_valid_for_rules(
+          counts.gk::integer,counts.def::integer,counts.mid::integer,counts.fwd::integer,team.rules
+        ) then
           update public.fantasy_team_gameweek_players
           set multiplier=0,counted_points=0,was_auto_subbed_out=true where id=missing.id;
           update public.fantasy_team_gameweek_players

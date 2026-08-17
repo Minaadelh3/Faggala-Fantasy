@@ -10,6 +10,9 @@
 create extension if not exists "uuid-ossp";
 create extension if not exists "pgcrypto";
 
+-- Hosted Supabase installs extension functions in the `extensions` schema.
+set search_path = public, extensions;
+
 -- ------------------------------------------------------------
 -- ENUM TYPES
 -- ------------------------------------------------------------

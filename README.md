@@ -27,7 +27,7 @@ Only the public browser credentials belong in `.env.local`. Never use a Supabase
 
 For production, configure the same two variables in the deployment provider's environment settings and rebuild/redeploy the application. This repository does not currently contain provider-specific deployment configuration.
 
-Apply migrations `001` through `010` in order. Deploy both protected functions:
+Apply every migration in `supabase/migrations` in numeric order. Deploy both protected functions:
 
 ```bash
 supabase functions deploy lock-gameweek

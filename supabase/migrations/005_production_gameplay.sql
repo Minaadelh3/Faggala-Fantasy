@@ -3,6 +3,8 @@
 
 begin;
 
+set local search_path = public, extensions;
+
 alter table gameweeks drop constraint if exists gameweeks_status_check;
 alter table gameweeks add constraint gameweeks_status_check
   check (status in ('upcoming', 'locked', 'active', 'finished'));
@@ -183,7 +185,7 @@ begin
   if v_season is null then raise exception 'No current season'; end if;
   insert into fantasy_leagues(church_id,season_id,created_by,name,is_private,invite_code,max_members,status)
   values(p_church_id,v_season,auth.uid(),trim(p_name),p_is_private,
-    case when p_is_private then 'FAG-'||upper(substr(encode(gen_random_bytes(5),'hex'),1,5)) end,
+    case when p_is_private then 'FAG-'||upper(substr(encode(extensions.gen_random_bytes(5),'hex'),1,5)) end,
     greatest(2,least(p_max_members,1000)),'active') returning * into v_league;
   return v_league;
 end $$;
